@@ -1,107 +1,115 @@
+#include <algorithm>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 
 using namespace std;
 
 struct Node {
-	int y;
-	int x;
+  int y, x;
 };
 
 struct Dist {
-	int id;
-	int dist;
+  int id, dist;
 };
 
-bool operator < (Dist a, Dist b) {
-	if (a.dist < b.dist)
-		return true;
-	if (a.dist > b.dist)
-		return false;
-	return false;
+bool operator<(Dist a, Dist b) {
+  if (a.dist < b.dist) return true;
+  if (a.dist > b.dist) return false;
+  return false;
 }
 
 int N, M;
-int board[51][51];
-vector<Node> v_home;
-vector<Node> v_chicken;
-vector<vector<Dist>> v_dist;
-int visited[13];
-int dist_min = 2147483647;
+int board[50][50];
+vector<Node> house;
+vector<Node> chicken;
+int flag[13];
+vector<Dist> v[100];
+int min_dist_sum = 2147483647;
 
-void count_min_dist() {
-	int dist = 0;
-	for (int i = 0; i < v_dist.size(); i++) {
-		for (int j = 0; j < v_dist[i].size(); j++) {
-			if (visited[v_dist[i][j].id] == 0)
-				continue;
-			dist += v_dist[i][j].dist;
-			break;
-		}
-	}
-	dist_min = min(dist_min, dist);
+int getCityDist() {
+  int dist_sum = 0;
+  for (int i = 0; i < house.size(); i++) {
+    for (int j = 0; j < v[i].size(); j++) {
+      Dist now = v[i][j];
+      if (flag[now.id] == 0) continue;
+      dist_sum += now.dist;
+      break;
+    }
+  }
+  if (dist_sum == 0) dist_sum = 2147483647;
+  return dist_sum;
 }
 
-// ƒ°≈≤¡˝ M∞≥ ∞Ì∏£±‚
 void dfs(int level, int cnt) {
-	// base case
-	if (cnt == M) {
-		count_min_dist();
-		return;
-	}
-	if (level == v_chicken.size())
-		return;
-	// recursive case
-	// 1. ∆Û¡°
-	dfs(level + 1, cnt);
-	// 2. ¿Ø¡ˆ
-	visited[level] = 1;
-	dfs(level + 1, cnt + 1);
-	visited[level] = 0;
+  // base case
+  if (cnt > M) return;
+  if (level == chicken.size()) {
+    min_dist_sum = min(min_dist_sum, getCityDist());
+    return;
+  }
+  // recursive case
+  flag[level] = 1;
+  dfs(level + 1, cnt + 1);
+  flag[level] = 0;
+  dfs(level + 1, cnt);
+}
+
+void solution() {
+  dfs(0, 0);
+  cout << min_dist_sum;
+}
+
+int getDist(int h_id, int c_id) {
+  Node h = house[h_id];
+  Node c = chicken[c_id];
+
+  return abs(h.y - c.y) + abs(h.x - c.x);
+}
+
+void input() {
+  cin >> N >> M;
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      cin >> board[i][j];
+      if (board[i][j] == 1) house.push_back({i, j});
+      if (board[i][j] == 2) chicken.push_back({i, j});
+    }
+  }
+
+  for (int i = 0; i < house.size(); i++) {
+    for (int j = 0; j < chicken.size(); j++) {
+      v[i].push_back({j, getDist(i, j)});
+    }
+    sort(v[i].begin(), v[i].end());
+  }
 }
 
 int main() {
-	ios_base::sync_with_stdio(false);
-	cin.tie(NULL);
-	cout.tie(NULL);
+  ios_base::sync_with_stdio(false);
+  cin.tie(NULL);
+  cout.tie(NULL);
 
-	cin >> N >> M;
-	for (int i = 1; i <= N; i++) {
-		for (int j = 1; j <= N; j++) {
-			cin >> board[i][j];
-			if (board[i][j] == 1)
-				v_home.push_back({ i, j });
-			else if (board[i][j] == 2)
-				v_chicken.push_back({ i, j });
-		}
-	}
+  input();
+  solution();
 
-	for (int i = 0; i < v_home.size(); i++) {
-		vector<Dist> v;
-		Node now_home = v_home[i];
-		for (int j = 0; j < v_chicken.size(); j++) {
-			Node now_chicken = v_chicken[j];
-			int dist = abs(now_home.y - now_chicken.y) + abs(now_home.x - now_chicken.x);
-			v.push_back({ j, dist });
-		}
-		sort(v.begin(), v.end());
-		v_dist.push_back(v);
-	}
-
-	dfs(0, 0);
-	cout << dist_min;
-
-	return 0;
+  return 0;
 }
 
 /*
-∫Ûƒ≠(0), ƒ°≈≤(2), ¡˝(1)
-1-indexing
-ƒ°≈≤ ∞≈∏Æ: ¡˝∞˙ ∞°¿Â ∞°±ÓøÓ ƒ°≈≤¡˝ ªÁ¿Ã ∞≈∏Æ
-µµΩ√¿« ƒ°≈≤ ∞≈∏Æ : ∏µÁ ¡˝¿« ƒ°≈≤∞≈∏Æ¿« «’
+N-by-N board
+0 ÎπàÏπ∏, 1 Ïßë, 2 ÏπòÌÇ®
+Ïßë : [1, 2N], ÏπòÌÇ® : [M, 13]
 
-ƒ°≈≤¡˝ M∞≥∏∏ ≥≤±‚±‚
-µµΩ√¿« ƒ°≈≤ ∞≈∏Æ∞° ∞°¿Â ¿€∞‘µ«¥¬ M∞≥ ∞Ì∏£¥¬ πÊπ˝
+ÏπòÌÇ®Í±∞Î¶¨ : ÏßëÍ≥º Í∞ÄÏû• Í∞ÄÍπåÏö¥ ÏπòÌÇ® Ïßë ÏÇ¨Ïù¥Ïùò Í±∞Î¶¨
 
+ÏπòÌÇ®Ïßë ÏµúÎåÄ MÍ∞úÎßå ÏÉùÏ°¥, ÎÇòÎ®∏ÏßÄ ÌèêÏóÖ
+ÏπòÌÇ®Í±∞Î¶¨ ÏµúÏÜüÍ∞í
+
+Í≥†Ï†ïÎêú Í∞í
+- Í∞ÅÍ∞ÅÏùò ÏßëÏóêÏÑú Í∞ÅÍ∞ÅÏùò ÏπòÌÇ®ÏßëÏúºÎ°úÏùò ÏπòÌÇ®Í±∞Î¶¨
+
+Î≥ÄÌïòÎäî Í∞í
+- ÏÉùÏ°¥Ìïú ÏπòÌÇ®Ïßë
+
+ÏπòÌÇ®ÏßëÏùÑ Í≥†Î•¥Îäî Í≤ΩÏö∞ -> 1~MÍ∞úÏùò Ï°∞Ìï©
 */
